@@ -1,6 +1,5 @@
-
-import 'package:disability_app/screens/Welcome/welcome_screen.dart';
 import 'package:disability_app/screens/colors.dart';
+import 'package:disability_app/screens/first_page.dart/first.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -10,23 +9,14 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-   
-      theme: ThemeData.light(
-        useMaterial3: true
-        
-      
-      ).copyWith(
-        scaffoldBackgroundColor: Pallete.whiteColor,
-        appBarTheme: AppBarTheme(
-          backgroundColor: Pallete.whiteColor
-        )
-      ),
-      home:  WelcomeScreen(),
+      theme: ThemeData.light(useMaterial3: true).copyWith(
+          scaffoldBackgroundColor: Pallete.whiteColor,
+          appBarTheme: const AppBarTheme(backgroundColor: Pallete.whiteColor)),
+      home: MainPage(),
     );
   }
 }

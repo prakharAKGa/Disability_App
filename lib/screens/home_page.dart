@@ -84,13 +84,12 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         centerTitle: true,
-       leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              // Add your back button functionality here
-              Navigator.pop(context);
-            },
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -178,18 +177,15 @@ class _HomePageState extends State<HomePage> {
         onPressed: () async {
           if (await speechToText.hasPermission && speechToText.isNotListening) {
             await startListening();
-           
-            
           } else if (speechToText.isListening) {
-             final speech = await openAIService.isArtPromptAPI(lastWords);
+            final speech = await openAIService.isArtPromptAPI(lastWords);
             generatedContent = speech;
-           
+
             CircularProgressIndicator();
 
             await stopListening();
-             await systemSpeak(speech);
+            await systemSpeak(speech);
             setState(() {});
-            
           } else {
             initSpeechToText();
           }

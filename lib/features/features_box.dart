@@ -17,38 +17,34 @@ class FeatureBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: 35,
-        vertical: 10
-      ),
+      margin: EdgeInsets.symmetric(horizontal: 35, vertical: 10),
       decoration: BoxDecoration(
-       color: color ,
-       borderRadius: BorderRadius.all(
-        Radius.circular(15)
-       )
-
-      ),
+          color: color, borderRadius: BorderRadius.all(Radius.circular(15))),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20,
-         ).copyWith(left: 15),
+        padding: const EdgeInsets.symmetric(
+          vertical: 20,
+        ).copyWith(left: 15),
         child: Column(children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(headerText,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Pallete.blackColor
-            ),),
-            
+            child: Text(
+              headerText,
+              style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Pallete.blackColor),
+            ),
           ),
-          SizedBox(height: 3,),
-          Text(descriptionText,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Pallete.blackColor
-          ),)
+          SizedBox(
+            height: 3,
+          ),
+          Text(
+            descriptionText,
+            style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Pallete.blackColor),
+          )
         ]),
       ),
     );
