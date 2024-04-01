@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:tflite_flutter/tflite_flutter.dart';
-import 'package:tflite_flutter_processing/tflite_flutter_processing.dart';
+import 'package:tensorflow_lite_flutter/tensorflow_lite_flutter.dart';
 
 class SignLanguage extends StatefulWidget {
   @override
@@ -14,10 +14,8 @@ class _SignLanguageState extends State<SignLanguage> {
   List? _outputs;
   File? _image;
   bool _loading = false;
-  ImagePicker picker = ImagePicker(); // Create an instance of ImagePicker
-  ImageProcessor imageProcessor = ImageProcessorBuilder()
-      .add(ResizeOp(224, 2, ResizeMethod.NEAREST_NEIGHBOUR))
-      .build();
+
+  final FlutterTts flutterTts = FlutterTts();
 
   @override
   void initState() {
@@ -54,60 +52,57 @@ class _SignLanguageState extends State<SignLanguage> {
 
   Future<void> _optionsDialogBox() {
     return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.red,
-          shape: RoundedRectangleBorder(
-            borderRadius: new BorderRadius.circular(10.0),
-          ),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                GestureDetector(
-                  child: Text(
-                    'Take a Picture',
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
-                  onTap: () => openCamera(ImageSource.camera),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(10.0),
-                ),
-                GestureDetector(
-                  child: Text(
-                    'Choose from Gallery',
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
-                  onTap: openGallery,
-                )
-              ],
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: Colors.red,
+            shape: RoundedRectangleBorder(
+              borderRadius: new BorderRadius.circular(10.0),
             ),
-          ),
-        );
-      },
-    );
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: <Widget>[
+                  GestureDetector(
+                    child: Text(
+                      'Take a Picture',
+                      style: TextStyle(
+                        fontSize: 20,
+                      ),
+                    ),
+                    onTap: openCamera,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(10.0),
+                  ),
+                  GestureDetector(
+                    child: Text(
+                      'Choose from Gallery',
+                      style: TextStyle(
+                        fontSize: 20,
+                      ),
+                    ),
+                    onTap: openGallery,
+                  )
+                ],
+              ),
+            ),
+          );
+        });
   }
 
-  Future<void> openCamera(ImageSource source) async {
-    final XFile? image = await picker.pickImage(source: source);
-    if (image == null) return;
-
+  Future openCamera() async {
+    var image = await ImagePicker().pickImage(source: ImageSource.camera);
     Navigator.of(context).pop();
 
     setState(() {
       _loading = true;
-      _image = File(image.path);
+      _image = File(image!.path);
     });
-    classifyImage(File(image.path));
+    classifyImage(File(image!.path));
   }
 
-  Future<void> openGallery() async {
-    var image = await picker.pickImage(source: ImageSource.gallery);
+  Future openGallery() async {
+    var image = await ImagePicker().pickImage(source: ImageSource.gallery);
     Navigator.of(context).pop();
     if (image == null) return null;
     setState(() {
@@ -117,31 +112,29 @@ class _SignLanguageState extends State<SignLanguage> {
     classifyImage(File(image.path));
   }
 
-  Future<void> classifyImage(File image) async {
-    try {
-      TensorImage tensorImage = TensorImage.fromFile(image);
-      tensorImage = imageProcessor.process(tensorImage);
-
-      setState(() {
-        _loading = false;
-        _outputs = tensorImage as List?;
-      });
-    } catch (e) {
-      print('Error classifying image: $e');
-    }
+  classifyImage(File image) async {
+    var output = await Tflite.runModelOnImage(
+      path: image.path,
+      numResults: 2,
+      threshold: 0.5,
+      imageMean: 127.5,
+      imageStd: 127.5,
+    );
+    setState(() {
+      _loading = false;
+      _outputs = output;
+    });
   }
 
-  Future<void> loadModel() async {
-    try {
-      Interpreter interpreter =
-          await Interpreter.fromAsset('assets/model.tflite');
-      print('Model loaded successfully');
-      setState(() {
-        _loading = false;
-      });
-    } catch (e) {
-      print('Error loading model: $e');
-    }
+  loadModel() async {
+    String? res = await Tflite.loadModel(
+      model: "assets/model.tflite",
+      labels: "assets/labels.txt",
+      numThreads: 1, 
+      isAsset: true,
+      useGpuDelegate:
+          false, 
+    );
   }
 
   @override
@@ -151,20 +144,27 @@ class _SignLanguageState extends State<SignLanguage> {
 
   @override
   Widget build(BuildContext context) {
+    Future speak(String s) async {
+      await flutterTts.setLanguage("en-US");
+      await flutterTts.setPitch(1);
+      await flutterTts.setSpeechRate(0.5);
+      await flutterTts.speak(s);
+    }
+
     return Scaffold(
       appBar: AppBar(
-          backgroundColor: Color.fromARGB(255, 1, 132, 91),
-          title: Center(
-              child: Text(
+        backgroundColor: Color.fromARGB(255, 1, 132, 91),
+        title: Center(
+          child: Text(
             'Sign Language Detection',
-            style: TextStyle(color: Colors.white),
-          ))),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
       body: Container(
         child: Column(
           children: <Widget>[
-            SizedBox(
-              height: 170,
-            ),
+            SizedBox(height: 120),
             _loading
                 ? Center(
                     child: Container(
@@ -206,9 +206,7 @@ class _SignLanguageState extends State<SignLanguage> {
                                   width: 400,
                                   child: Image.file(_image!),
                                 ),
-                          SizedBox(
-                            height: 20,
-                          ),
+                          SizedBox(height: 20),
                           _image != null
                               ? Text(
                                   "${_outputs?[0]["label"]}",
@@ -217,17 +215,28 @@ class _SignLanguageState extends State<SignLanguage> {
                                     fontSize: 20.0,
                                   ),
                                 )
-                              : Container()
+                              : Container(),
+                          SizedBox(height: 20),
+                          _image != null
+                              ? Text(
+                                  "Recognized Letter: ${_outputs?[0]["label"]}",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color.fromARGB(255, 8, 35, 72),
+                                    fontSize: 20.0,
+                                  ),
+                                )
+                              : Container(),
                         ],
                       ),
                     ),
                   ),
-            SizedBox(
-              height: 10,
-            ),
+            SizedBox(height: 10),
             Center(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  speak("${_outputs?[0]["label"]}");
+                },
                 child: Icon(
                   Icons.play_arrow,
                   size: 60,
